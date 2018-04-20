@@ -25,7 +25,7 @@ func (r *Restrictor) LimitReached(key string) bool {
 // LimitReachedAtTime check whether limit has been reached at time 'now'
 func (r *Restrictor) LimitReachedAtTime(now time.Time, key string) bool {
 	randMark := strconv.Itoa(time.Now().Nanosecond())
-	// can not preceed further , return true
+	// can not preceed further, return true
 	if !r.store.TryLock(key, randMark) {
 		return true
 	}
@@ -53,7 +53,8 @@ func (r *Restrictor) LimitReachedAtTime(now time.Time, key string) bool {
 // window should not be too large, it will be converted to 'seconds'
 // limit is the max number of requests allowed in a window
 // numberOfBuckets is number of buckets in the sliding window, usually around 100
-func NewRestrictor(window time.Duration, limit, numberOfBuckets uint32) Restrictor {
+func NewRestrictor(window time.Duration, limit, numberOfBuckets uint32,
+	store Store) Restrictor {
 	windowSec := uint32(window.Seconds())
 	span := windowSec / numberOfBuckets
 	if windowSec%numberOfBuckets > 0 {
@@ -65,5 +66,6 @@ func NewRestrictor(window time.Duration, limit, numberOfBuckets uint32) Restrict
 		upperLimit: uint32(limit),
 		bucketSpan: span,
 		prefix:     fmt.Sprintf("%d_%02d_", time.Now().UnixNano(), rand.Intn(100)),
+		store:      store,
 	}
 }
