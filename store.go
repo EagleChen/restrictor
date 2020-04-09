@@ -85,7 +85,7 @@ func (r *redisStore) GetLimiter(key string) (*Limiter, time.Time, bool) {
 	if !ok {
 		return nil, now, false
 	}
-	ttl, ok := reply[1].(int)
+	ttl, ok := reply[1].(int64)
 	if !ok {
 		return nil, now, false
 	}
