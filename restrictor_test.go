@@ -8,7 +8,7 @@ import (
 const d = 100 * time.Millisecond
 
 var (
-	t0  = time.Now()
+	t0  = time.Unix(1600530888, 0)
 	t1  = t0.Add(time.Duration(1) * d)
 	t2  = t0.Add(time.Duration(2) * d)
 	t3  = t0.Add(time.Duration(3) * d)
@@ -27,12 +27,12 @@ func TestRestrictorLimit(t *testing.T) {
 	r := NewRestrictor(window, uint32(limit), 2, store)
 
 	for i := 0; i < limit; i++ {
-		if r.LimitReached(key) {
+		if reached, _ := r.LimitReached(key); reached {
 			t.Errorf("limit should not have been reached at step %d", i)
 		}
 	}
 
-	if !r.LimitReached(key) {
+	if reached, _ := r.LimitReached(key); !reached {
 		t.Error("limit has been reached but not reported so")
 	}
 
@@ -44,19 +44,19 @@ func TestRestrictorResetWindow(t *testing.T) {
 	r := NewRestrictor(2*time.Second, 5, 2, store)
 
 	for i, ts := range []time.Time{t0, t1, t2, t3, t4} {
-		if r.LimitReachedAtTime(ts, key) {
+		if reached, _ := r.LimitReachedAtTime(ts, key); reached {
 			t.Errorf("limit should not have been reached at step %d", i)
 		}
 	}
 
 	for _, ts := range []time.Time{t5, t10, t12} {
-		if !r.LimitReachedAtTime(ts, key) {
+		if reached, _ := r.LimitReachedAtTime(ts, key); !reached {
 			t.Error("limit has been reached but not reported so")
 		}
 	}
 
 	// reset
-	if r.LimitReachedAtTime(t20, key) {
+	if reached, _ := r.LimitReachedAtTime(t20, key); reached {
 		t.Error("limitor reset, but reported 'reached'")
 	}
 }
@@ -70,13 +70,13 @@ func TestRestrictorWithVariousKeys(t *testing.T) {
 	for i := 0; i < limit; i++ {
 		r.LimitReached(key1)
 	}
-	if !r.LimitReached(key1) {
+	if reached, _ := r.LimitReached(key1); !reached {
 		t.Error("limit has been reached but not reported so")
 	}
 
 	key2 := "456"
 	for i := 0; i < limit; i++ {
-		if r.LimitReached(key2) {
+		if reached, _ := r.LimitReached(key2); reached {
 			t.Errorf("limit should not have been reached at step %d", i)
 		}
 	}
@@ -94,7 +94,7 @@ func TestRestrictorThreadSafe(t *testing.T) {
 	for _, reqCount := range reqs {
 		go func(reqCount int) {
 			for i := 0; i < reqCount; i++ {
-				if r.LimitReached(key) {
+				if reached, _ := r.LimitReached(key); reached {
 					t.Error("limit should not have been reached")
 				}
 			}
@@ -103,7 +103,7 @@ func TestRestrictorThreadSafe(t *testing.T) {
 	}
 
 	key2 := "234"
-	if r.LimitReached(key2) {
+	if reached, _ := r.LimitReached(key2); reached {
 		t.Error("limit should not have been reached")
 	}
 
@@ -111,7 +111,7 @@ func TestRestrictorThreadSafe(t *testing.T) {
 		<-done
 	}
 
-	if !r.LimitReached(key) {
+	if reached, _ := r.LimitReached(key); !reached {
 		t.Error("limit has been reached but not reported so")
 	}
 }

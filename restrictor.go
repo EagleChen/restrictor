@@ -18,16 +18,16 @@ type Restrictor struct {
 }
 
 // LimitReached check whether limit has been reached now
-func (r *Restrictor) LimitReached(key string) bool {
+func (r *Restrictor) LimitReached(key string) (bool, error) {
 	return r.LimitReachedAtTime(time.Now(), key)
 }
 
 // LimitReachedAtTime check whether limit has been reached at time 'now'
-func (r *Restrictor) LimitReachedAtTime(now time.Time, key string) bool {
+func (r *Restrictor) LimitReachedAtTime(now time.Time, key string) (bool, error) {
 	randMark := strconv.Itoa(time.Now().Nanosecond())
 	// can not preceed further, return true
-	if !r.store.TryLock(key, randMark) {
-		return true
+	if ok, err := r.store.TryLock(key, randMark); !ok || err != nil {
+		return true, err
 	}
 
 	lmt, expireTime, found := r.store.GetLimiter(r.prefix + key)
@@ -46,7 +46,7 @@ func (r *Restrictor) LimitReachedAtTime(now time.Time, key string) bool {
 	}
 
 	r.store.Unlock(key, randMark)
-	return reached
+	return reached, nil
 }
 
 // NewRestrictor creates a restrictor

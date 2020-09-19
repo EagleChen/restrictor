@@ -24,8 +24,8 @@ r := NewRestrictor(5 * time.Minute, 500, 60, store)
 
 // third, check limit
 // yourKey might be an IP addr, a user id, etc.
-if r.LimitReached(yourKey) {
-    // limit is reached, notify user
+if reached, err := r.LimitReached(yourKey); reached || err != nil {
+    // limit is reached or some error returned, notify uesr
 } else {
     // go on do the real job
 }

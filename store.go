@@ -25,7 +25,7 @@ type Store interface {
 	// expireAfter is in seconds
 	SetLimiter(key string, value *Limiter, expireAfter int) error
 
-	TryLock(key, mark string) bool
+	TryLock(key, mark string) (bool, error)
 	Unlock(key, mark string) error
 }
 
@@ -54,8 +54,8 @@ func (l *localCacheStore) SetLimiter(key string, value *Limiter, expireAfter int
 
 // TryLock tries to get a lock for the key
 // mark is useless for localcachestore
-func (l *localCacheStore) TryLock(key, mark string) bool {
-	return l.m.TryLock(key)
+func (l *localCacheStore) TryLock(key, mark string) (bool, error) {
+	return l.m.TryLock(key), nil
 }
 
 // Unlock release the lock
@@ -114,16 +114,16 @@ func (r *redisStore) SetLimiter(key string, l *Limiter, expireAfter int) error {
 }
 
 // TryLock tries to get a lock for the key
-func (r *redisStore) TryLock(key, mark string) bool {
+func (r *redisStore) TryLock(key, mark string) (bool, error) {
 	reply, err := redis.String(r.conn.Do("SET", key, mark,
 		"NX", "EX", 3)) // expire after 3 seconds
 	if err != nil {
-		return false
+		return false, fmt.Errorf("fail to call trylock: %w", err)
 	}
 	if reply != "OK" {
-		return false // fmt.Errorf("redis err reply: %s", reply)
+		return false, fmt.Errorf("redis err reply: %s", reply)
 	}
-	return true
+	return true, nil
 
 }
 
